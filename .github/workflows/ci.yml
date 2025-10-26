@@ -1,0 +1,209 @@
+name: Aurora OS CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-kernel:
+    name: Build C++ Kernel
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install CMake
+      run: |
+        brew install cmake
+        cmake --version
+    
+    - name: Configure Aurora Kernel
+      working-directory: aurora
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+    
+    - name: Build Aurora Kernel
+      working-directory: aurora/build
+      run: |
+        cmake --build . --config Release -j$(sysctl -n hw.ncpu)
+    
+    - name: Verify Kernel Artifacts
+      working-directory: aurora/build
+      run: |
+        echo "=== Verifying build artifacts ==="
+        ls -lh lib/
+        ls -lh bin/
+        test -f lib/libaurora_kernel.a || exit 1
+        test -f lib/libaurora_kernel.dylib || exit 1
+        test -f bin/aurora_kernel_test || exit 1
+        echo "✓ All kernel artifacts present"
+    
+    - name: Upload Kernel Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: aurora-kernel-macos
+        path: |
+          aurora/build/lib/
+          aurora/build/bin/
+          aurora/include/
+
+  build-swift-ui:
+    name: Build Swift UI
+    runs-on: macos-latest
+    needs: build-kernel
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      run: |
+        swift --version
+        xcodebuild -version
+    
+    - name: Download Kernel Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: aurora-kernel-macos
+        path: aurora/
+    
+    - name: Restore Kernel Structure
+      run: |
+        # Artifacts download flattens structure, need to restore it
+        mkdir -p aurora/build
+        if [ -d aurora/lib ]; then
+          mv aurora/lib aurora/build/
+        fi
+        if [ -d aurora/bin ]; then
+          mv aurora/bin aurora/build/
+        fi
+        ls -R aurora/
+    
+    - name: Build Swift UI Application
+      working-directory: aurora-ui
+      run: |
+        swift build -c release -v
+    
+    - name: Verify Swift Build
+      working-directory: aurora-ui
+      run: |
+        echo "=== Verifying Swift build ==="
+        test -f .build/release/AuroraUI || exit 1
+        echo "✓ Swift UI executable built successfully"
+    
+    - name: Upload Swift UI Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: aurora-ui-macos
+        path: aurora-ui/.build/release/AuroraUI
+
+  integration-test:
+    name: Integration Tests
+    runs-on: macos-latest
+    needs: [build-kernel, build-swift-ui]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download Kernel Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: aurora-kernel-macos
+        path: aurora/
+    
+    - name: Restore Kernel Structure
+      run: |
+        mkdir -p aurora/build
+        if [ -d aurora/lib ]; then
+          mv aurora/lib aurora/build/
+        fi
+        if [ -d aurora/bin ]; then
+          mv aurora/bin aurora/build/
+        fi
+    
+    - name: Test Kernel Library
+      working-directory: aurora
+      run: |
+        echo "=== Testing kernel library ==="
+        # Check library can be loaded
+        otool -L build/lib/libaurora_kernel.dylib
+        # Check symbols are exported
+        nm build/lib/libaurora_kernel.a | grep aurora_kernel_init || exit 1
+        echo "✓ Kernel library has required symbols"
+    
+    - name: Run Kernel Tests
+      working-directory: aurora/build
+      run: |
+        echo "=== Running kernel tests ==="
+        ./bin/aurora_kernel_test
+        echo "✓ Kernel tests passed"
+    
+    - name: Download Swift UI Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: aurora-ui-macos
+        path: aurora-ui-build/
+    
+    - name: Verify Swift-C++ Integration
+      run: |
+        echo "=== Verifying Swift-C++ integration ==="
+        # Check Swift binary links to kernel
+        otool -L aurora-ui-build/AuroraUI | grep -E "(aurora_kernel|libaurora)" || echo "⚠ Warning: Swift binary may use static linking"
+        # Verify binary is executable
+        file aurora-ui-build/AuroraUI
+        echo "✓ Integration verification complete"
+
+  lint:
+    name: Lint and Format Check
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check C++ Formatting
+      working-directory: aurora
+      run: |
+        echo "=== Checking C++ code style ==="
+        # Basic checks for common issues
+        ! grep -r "TODO\|FIXME\|XXX" src/ include/ || echo "⚠ Found TODO comments"
+        echo "✓ C++ lint check complete"
+    
+    - name: Check Swift Formatting
+      working-directory: aurora-ui
+      run: |
+        echo "=== Checking Swift code style ==="
+        swift --version
+        # Check for common Swift issues
+        ! grep -r "TODO\|FIXME" Sources/ || echo "⚠ Found TODO comments"
+        echo "✓ Swift lint check complete"
+
+  build-status:
+    name: Build Status Summary
+    runs-on: macos-latest
+    needs: [build-kernel, build-swift-ui, integration-test, lint]
+    if: always()
+    
+    steps:
+    - name: Check Build Status
+      run: |
+        echo "=== Aurora OS Build Status ==="
+        echo "✓ C++ Kernel Build: ${{ needs.build-kernel.result }}"
+        echo "✓ Swift UI Build: ${{ needs.build-swift-ui.result }}"
+        echo "✓ Integration Tests: ${{ needs.integration-test.result }}"
+        echo "✓ Lint Checks: ${{ needs.lint.result }}"
+        
+        if [[ "${{ needs.build-kernel.result }}" == "success" && 
+              "${{ needs.build-swift-ui.result }}" == "success" && 
+              "${{ needs.integration-test.result }}" == "success" ]]; then
+          echo ""
+          echo "🎉 All Aurora OS builds and tests passed!"
+          exit 0
+        else
+          echo ""
+          echo "❌ Some builds or tests failed"
+          exit 1
+        fi

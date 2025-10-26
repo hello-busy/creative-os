@@ -1,11 +1,16 @@
-# hello
-Creative Content
+# Creative OS
 
-Your social creative content network for discovery - where streaming, posting, creating, and producing come together. The best place for all the entertainment you need, bringing together everything you want in one site.
-=======
-# Hello - Creative Content Platform
+A comprehensive creative platform combining web-based collaboration with Aurora OS - a next-generation microkernel operating system.
 
-A comprehensive platform for creative collaboration and competition with gamification features.
+## Components
+
+This repository contains two major components:
+
+### 1. Hello - Creative Content Platform
+A web-based platform for creative collaboration and competition with gamification features.
+
+### 2. Aurora OS
+A minimal L4-inspired microkernel with Swift UI integration for native macOS experience.
 
 ## Features
 
@@ -49,7 +54,9 @@ A comprehensive platform for creative collaboration and competition with gamific
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Option 1: Web Platform (Hello)
+
+#### Using Docker (Recommended)
 
 1. Clone the repository
 2. Run the application:
@@ -58,7 +65,7 @@ docker-compose up -d
 ```
 3. Access the application at `http://localhost:3000`
 
-### Manual Setup
+#### Manual Setup
 
 1. Install dependencies:
 ```bash
@@ -87,6 +94,64 @@ npm start
 For development with auto-reload:
 ```bash
 npm run dev
+```
+
+### Option 2: Aurora OS (Native macOS)
+
+Aurora OS provides a minimal microkernel with Swift UI for demonstration and experimentation.
+
+#### Prerequisites
+
+- macOS 13.0 (Ventura) or later
+- Xcode 14+ with Command Line Tools
+- CMake 3.15+
+- Swift 5.7+
+
+#### Build and Run Aurora OS
+
+**Step 1: Build the C++ Kernel**
+
+```bash
+cd aurora
+./build.sh
+```
+
+This creates:
+- `build/lib/libaurora_kernel.a` - Static library
+- `build/lib/libaurora_kernel.dylib` - Shared library
+- `build/bin/aurora_kernel_test` - Test executable
+
+**Step 2: Build the Swift UI**
+
+```bash
+cd ../aurora-ui
+swift build
+```
+
+**Step 3: Run Aurora OS**
+
+```bash
+swift run
+```
+
+The Aurora UI will launch, allowing you to:
+- Monitor kernel status (version, uptime, thread count)
+- Create and destroy kernel threads
+- Execute demo kernel calls
+- See real-time kernel interaction
+
+#### Testing Aurora Components
+
+**Test C++ Kernel:**
+```bash
+cd aurora/build
+./bin/aurora_kernel_test
+```
+
+**Test Swift UI:**
+```bash
+cd aurora-ui
+swift test  # (when tests are added)
 ```
 
 ## API Endpoints
@@ -199,12 +264,164 @@ npm test
 - **Routes**: Define API endpoints and map to controllers
 - **Middleware**: Handle cross-cutting concerns (auth, gamification)
 
+## Aurora OS Architecture
+
+Aurora OS is built on microkernel principles:
+
+```
+┌─────────────────────────────────────┐
+│         Swift UI (macOS App)        │
+│      (Aurora OS Control Panel)      │
+└──────────────┬──────────────────────┘
+               │ Swift-C Interop
+               │ (AuroraBridge)
+┌──────────────▼──────────────────────┐
+│        C ABI Interface Layer        │
+│         (aurora_abi.h)              │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│      L4 Microkernel (C++)           │
+│  • Thread Management                │
+│  • IPC Primitives                   │
+│  • Minimal Kernel State             │
+└─────────────────────────────────────┘
+```
+
+### Key Features:
+- **L4-inspired design**: Fast IPC and minimal kernel
+- **Swift-C++ interop**: Native macOS UI calling C++ kernel
+- **Thread management**: Create/destroy kernel threads
+- **IPC messaging**: Inter-process communication primitives
+- **Real-time monitoring**: Live kernel status updates
+
+### Project Structure
+
+```
+creative-os/
+├── aurora/                    # C++ Microkernel
+│   ├── include/              
+│   │   └── aurora_abi.h      # C API definitions
+│   ├── src/
+│   │   └── kernel/
+│   │       └── l4_stub.cpp   # L4 microkernel implementation
+│   ├── CMakeLists.txt        # Build configuration
+│   ├── build.sh              # Build script
+│   └── README.md             # Kernel documentation
+│
+├── aurora-ui/                # Swift UI Application
+│   ├── Sources/
+│   │   ├── AuroraBridge/     # C interop module
+│   │   └── AuroraUI/         # SwiftUI views
+│   ├── Package.swift         # Swift package manifest
+│   └── README.md             # UI documentation
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # CI/CD for macOS builds
+│
+├── src/                      # Web platform backend
+├── public/                   # Web platform frontend
+└── README.md                 # This file
+```
+
+## Troubleshooting
+
+### Common Aurora OS Build Errors
+
+#### CMake not found
+```bash
+# Install via Homebrew
+brew install cmake
+```
+
+#### "No such file or directory: aurora_abi.h"
+The Swift build expects the kernel to be built first:
+```bash
+cd aurora && ./build.sh
+```
+
+#### "Library not loaded: libaurora_kernel.dylib"
+The library path needs to be set. Try:
+```bash
+cd aurora-ui
+swift build -c release
+# Run with library path
+DYLD_LIBRARY_PATH=../aurora/build/lib:$DYLD_LIBRARY_PATH .build/release/AuroraUI
+```
+
+Or use static linking by default (already configured in Package.swift).
+
+#### Swift Package Build Fails
+Ensure Xcode Command Line Tools are installed:
+```bash
+xcode-select --install
+```
+
+Verify Swift version:
+```bash
+swift --version  # Should be 5.7 or later
+```
+
+#### CI Build Failures
+The CI workflow requires macOS runners. GitHub Actions provides these for public repositories. Check:
+- Workflow file: `.github/workflows/ci.yml`
+- Runner availability: https://github.com/YOUR_USERNAME/creative-os/actions
+
+### Common Web Platform Issues
+
+#### MongoDB Connection Failed
+Ensure MongoDB is running:
+```bash
+# With Docker
+docker-compose up -d mongo
+
+# Or locally
+brew services start mongodb-community
+```
+
+#### Port 3000 already in use
+Change the port in `.env`:
+```
+PORT=3001
+```
+
+#### JWT Authentication Issues
+Regenerate JWT secret in `.env`:
+```
+JWT_SECRET=$(openssl rand -base64 32)
+```
+
+## CI/CD Pipeline
+
+Aurora OS includes GitHub Actions workflow for automated building and testing on macOS:
+
+- **Build C++ Kernel**: Compiles kernel with CMake
+- **Build Swift UI**: Builds SwiftUI app with Swift Package Manager
+- **Integration Tests**: Verifies kernel-UI interop
+- **Artifact Upload**: Saves builds for download
+
+View build status: `.github/workflows/ci.yml`
+
 ## Contributing
 
+### For Web Platform
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
+2. Create a feature branch for web features
+3. Test with `npm test`
 4. Submit a pull request
+
+### For Aurora OS
+1. Fork the repository
+2. Create a feature branch for kernel/UI features
+3. Build and test:
+   ```bash
+   cd aurora && ./build.sh && cd ../aurora-ui && swift build
+   ```
+4. Ensure CI passes
+5. Submit a pull request
+
+See `CONTRIBUTING.md` for detailed guidelines.
 
 ## License
 

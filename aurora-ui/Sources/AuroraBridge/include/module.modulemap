@@ -1,0 +1,4 @@
+module AuroraBridge {
+    header "../../../../aurora/include/aurora_abi.h"
+    export *
+}
