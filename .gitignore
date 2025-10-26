@@ -4,3 +4,28 @@ npm-debug.log
 .DS_Store
 dist/
 build/
+
+# Aurora OS Build Artifacts
+aurora/build/
+aurora-ui/.build/
+aurora-ui/.swiftpm/
+*.dylib
+*.a
+*.o
+*.dSYM
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Xcode
+xcuserdata/
+*.xcodeproj/
+DerivedData/
+
+# Swift Package Manager
+.swiftpm/
+*.swiftpm
+Package.resolved
