@@ -14,27 +14,29 @@ A minimal L4-inspired microkernel with Swift UI integration for native macOS exp
 
 ## Features
 
-### 🌍 Public Feed
+### Core Platform Features
+
+#### 🌍 Public Feed
 - Share creative content publicly with the entire community
 - Like and comment on posts
 - Real-time engagement tracking
 
-### 🔒 Private Communities
+#### 🔒 Private Communities
 - Create and manage private communities
 - Control access to exclusive content
 - Community-specific discussions and collaboration
 
-### 🤝 Collaboration (Collab)
+#### 🤝 Collaboration (Collab)
 - Team-based creative challenges
 - Shared content creation
 - Collaborative achievements
 
-### ⚔️ Competition (Compete)
+#### ⚔️ Competition (Compete)
 - Individual and team competitions
 - Leaderboards and rankings
 - Performance tracking
 
-### 🎮 Gamification System
+#### 🎮 Gamification System
 - **Points System**: Earn points for activities
 - **Level Progression**: 8 levels from beginner to expert
 - **Badges**: Unlock achievements
@@ -43,6 +45,35 @@ A minimal L4-inspired microkernel with Swift UI integration for native macOS exp
   - Challenge Winner (100 pts)
   - Team Player (25 pts)
   - Competitor (25 pts)
+
+### CreatorOS Features (NEW!)
+
+#### 📁 Project Management
+- Comprehensive project details and organization
+- Task management with assignments and due dates
+- Version history and snapshots
+- Team collaboration with role-based permissions
+- Multi-project tracking (video, podcast, social, design)
+
+#### 🎨 Media Library
+- Centralized hub for videos, images, audio, and documents
+- Search and filter by type and tags
+- Project linking for easy asset management
+- Metadata and organization tools
+
+#### 📋 Templates Gallery
+- Curated templates for various content types
+- Community-created and official templates
+- Rating and usage tracking
+- One-click template application
+
+#### 🔔 Notifications Center
+- Comprehensive notification system
+- Filter by type (mentions, deadlines, comments, etc.)
+- Mark as read and snooze functionality
+- Stay updated on all project activities
+
+For the complete roadmap and planned features, see [ROADMAP.md](./ROADMAP.md)
 
 ## Tech Stack
 
@@ -178,6 +209,37 @@ swift test  # (when tests are added)
 - `POST /api/challenges/:id/submit` - Submit challenge entry
 - `GET /api/challenges/:id/leaderboard` - Get challenge leaderboard
 
+### Projects (CreatorOS)
+- `POST /api/projects` - Create project
+- `GET /api/projects` - Get user's projects
+- `GET /api/projects/:id` - Get project details
+- `PUT /api/projects/:id` - Update project
+- `POST /api/projects/:id/collaborators` - Add collaborator
+- `POST /api/projects/:id/tasks` - Add task
+- `POST /api/projects/:id/versions` - Create version snapshot
+
+### Media Library (CreatorOS)
+- `POST /api/media` - Upload/create media
+- `GET /api/media` - Get media library
+- `GET /api/media/:id` - Get media details
+- `PUT /api/media/:id` - Update media
+- `DELETE /api/media/:id` - Delete media
+
+### Templates (CreatorOS)
+- `POST /api/templates` - Create template
+- `GET /api/templates` - Get templates
+- `GET /api/templates/:id` - Get template details
+- `POST /api/templates/:id/use` - Use template
+- `POST /api/templates/:id/rate` - Rate template
+
+### Notifications (CreatorOS)
+- `GET /api/notifications` - Get notifications
+- `PUT /api/notifications/:id/read` - Mark as read
+- `PUT /api/notifications/read-all` - Mark all as read
+- `PUT /api/notifications/:id/snooze` - Snooze notification
+
+For detailed API documentation, see [API.md](./API.md)
+
 ## Architecture
 
 ```
@@ -264,6 +326,14 @@ npm test
 - **Routes**: Define API endpoints and map to controllers
 - **Middleware**: Handle cross-cutting concerns (auth, gamification)
 
+## Documentation
+
+- **[Quick Start Guide](./QUICK_START.md)** - Get started in minutes
+- **[API Documentation](./API.md)** - Complete API reference
+- **[Roadmap](./ROADMAP.md)** - Feature roadmap and status
+- **[Implementation Guide](./IMPLEMENTATION_GUIDE.md)** - Developer guide for extending the platform
+- **[Architecture](./ARCHITECTURE.md)** - System design and architecture
+- **[Contributing](./CONTRIBUTING.md)** - How to contribute
 ## Aurora OS Architecture
 
 Aurora OS is built on microkernel principles:
@@ -411,6 +481,7 @@ View build status: `.github/workflows/ci.yml`
 3. Test with `npm test`
 4. Submit a pull request
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 ### For Aurora OS
 1. Fork the repository
 2. Create a feature branch for kernel/UI features

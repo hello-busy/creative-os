@@ -325,6 +325,253 @@ Authorization: Bearer <token>
 }
 ```
 
+## Projects (CreatorOS Feature)
+
+#### Create Project
+```http
+POST /api/projects
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "My Video Project",
+  "description": "Creating a tutorial series",
+  "type": "video",
+  "dueDate": "2024-02-01T00:00:00.000Z",
+  "tags": ["tutorial", "education"]
+}
+```
+
+**Types:** `video`, `podcast`, `social`, `design`, `other`
+
+#### Get Projects
+```http
+GET /api/projects?status=in-progress&type=video
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `status`: `draft`, `in-progress`, `review`, `completed`, `archived`
+- `type`: `video`, `podcast`, `social`, `design`, `other`
+
+#### Get Project Details
+```http
+GET /api/projects/:id
+Authorization: Bearer <token>
+```
+
+Returns project with tasks, versions, collaborators, and media.
+
+#### Update Project
+```http
+PUT /api/projects/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "status": "in-progress",
+  "dueDate": "2024-02-15T00:00:00.000Z"
+}
+```
+
+#### Add Collaborator
+```http
+POST /api/projects/:id/collaborators
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "userId": "user_id",
+  "role": "editor"
+}
+```
+
+**Roles:** `viewer`, `editor`, `admin`
+
+#### Add Task
+```http
+POST /api/projects/:id/tasks
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "Edit intro sequence",
+  "description": "Create 30-second intro",
+  "assignedTo": "user_id",
+  "dueDate": "2024-01-25T00:00:00.000Z"
+}
+```
+
+#### Create Version
+```http
+POST /api/projects/:id/versions
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "v1.0 - Initial Draft",
+  "description": "First complete draft"
+}
+```
+
+## Media Library (CreatorOS Feature)
+
+#### Upload Media
+```http
+POST /api/media
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "Background Music",
+  "description": "Royalty-free track",
+  "type": "audio",
+  "fileUrl": "https://example.com/file.mp3",
+  "fileSize": 5242880,
+  "mimeType": "audio/mpeg",
+  "tags": ["music", "background"],
+  "isPublic": false
+}
+```
+
+**Types:** `image`, `video`, `audio`, `document`
+
+**Note:** This endpoint accepts metadata. File upload integration (multer/cloud storage) needs to be implemented.
+
+#### Get Media Library
+```http
+GET /api/media?type=video&search=intro
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `type`: `image`, `video`, `audio`, `document`
+- `search`: Search in title and tags
+
+#### Get Media Details
+```http
+GET /api/media/:id
+Authorization: Bearer <token>
+```
+
+#### Update Media
+```http
+PUT /api/media/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "tags": ["new", "tags"],
+  "isPublic": true
+}
+```
+
+#### Delete Media
+```http
+DELETE /api/media/:id
+Authorization: Bearer <token>
+```
+
+## Templates Gallery (CreatorOS Feature)
+
+#### Create Template
+```http
+POST /api/templates
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "YouTube Intro Template",
+  "description": "Professional intro for YouTube videos",
+  "category": "video",
+  "thumbnail": "https://example.com/thumb.jpg",
+  "structure": {
+    "duration": 10,
+    "layers": ["background", "text", "logo"]
+  },
+  "tags": ["youtube", "intro"]
+}
+```
+
+**Categories:** `video`, `podcast`, `social`, `design`, `workflow`
+
+#### Get Templates
+```http
+GET /api/templates?category=video&featured=true&search=intro
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `category`: Template category
+- `featured`: `true` to get featured templates only
+- `search`: Search in title and tags
+
+#### Get Template Details
+```http
+GET /api/templates/:id
+Authorization: Bearer <token>
+```
+
+#### Use Template
+```http
+POST /api/templates/:id/use
+Authorization: Bearer <token>
+```
+
+Increments usage counter for popularity tracking.
+
+#### Rate Template
+```http
+POST /api/templates/:id/rate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "rating": 5
+}
+```
+
+**Rating:** 1-5 stars
+
+## Notifications (CreatorOS Feature)
+
+#### Get Notifications
+```http
+GET /api/notifications?type=mention&unreadOnly=true
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `type`: `mention`, `comment`, `like`, `deadline`, `invite`, `system`
+- `unreadOnly`: `true` to get only unread notifications
+
+#### Mark as Read
+```http
+PUT /api/notifications/:id/read
+Authorization: Bearer <token>
+```
+
+#### Mark All as Read
+```http
+PUT /api/notifications/read-all
+Authorization: Bearer <token>
+```
+
+#### Snooze Notification
+```http
+PUT /api/notifications/:id/snooze
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "minutes": 30
+}
+```
+
+Snoozes notification for specified minutes.
+
 ## Rate Limiting
 
 Currently no rate limiting is implemented. Consider adding rate limiting middleware for production use.
@@ -339,3 +586,7 @@ Currently no rate limiting is implemented. Consider adding rate limiting middlew
 6. Implement proper CORS policies
 7. Add rate limiting for production
 8. Monitor and log API usage
+
+## CreatorOS Roadmap
+
+For the complete feature roadmap and implementation status, see [ROADMAP.md](./ROADMAP.md).
